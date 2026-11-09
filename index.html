@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftHabit</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 16px; max-width: 650px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 20px; }
+    h1 { font-size: 1.6rem; color: var(--accent); }
+    .subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .mode-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .mode-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: var(--text-muted); cursor: pointer; font-weight: 600; text-align: center; transition: 0.2s; }
+    .mode-btn.active { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .badge-ok { background: rgba(52, 211, 153, 0.2); color: var(--accent-green); }
+    .badge-warn { background: rgba(251, 191, 36, 0.2); color: var(--accent-amber); }
+    .badge-danger { background: rgba(248, 113, 113, 0.2); color: var(--accent-red); }
+    .timeline-item { display: flex; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .timeline-time { width: 75px; font-weight: 700; color: var(--accent); font-size: 0.9rem; flex-shrink: 0; }
+    .timeline-desc { font-size: 0.9rem; line-height: 1.4; }
+    .water-bar { width: 100%; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; margin: 10px 0; border: 1px solid var(--border); }
+    .water-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #0ea5e9); transition: width 0.3s; }
+    .btn-row { display: flex; gap: 8px; }
+    .btn { background: #334155; color: var(--text); border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem; }
+    .btn:hover { background: #475569; }
+    .tab-bar { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; }
+    .tab { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; background: #0f172a; color: var(--text-muted); cursor: pointer; border: 1px solid var(--border); white-space: nowrap; }
+    .tab.active { background: #334155; color: var(--text); }
+    .warung-content { font-size: 0.85rem; line-height: 1.5; color: #cbd5e1; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>ShiftHabit</h1>
+    <div class="subtitle">Operations Routine &amp; Metabolism Guard</div>
+  </header>
+
+  <div class="mode-toggle">
+    <div class="mode-btn active" id="btnNormal" onclick="setMode('normal')">Normal Weekday</div>
+    <div class="mode-btn" id="btnMaint" onclick="setMode('maint')">Maintenance Window</div>
+  </div>
+
+  <!-- Caffeine Curfew Tracker -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-weight:600;">Caffeine Status</span>
+      <span class="status-badge" id="caffeineBadge">Checking...</span>
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-muted);" id="caffeineNote"></div>
+  </div>
+
+  <!-- Daily Timeline Anchor -->
+  <div class="card">
+    <div style="font-weight:600; margin-bottom:12px;">Daily Anchor Plan</div>
+    <div id="timelineContainer"></div>
+  </div>
+
+  <!-- Hydration Tracker -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:600;">Hydration Tracker (Target: 2,500 ml)</span>
+      <span id="waterText" style="font-weight:700; color:var(--accent);">0 / 2500 ml</span>
+    </div>
+    <div class="water-bar">
+      <div class="water-fill" id="waterProgress"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="addWater(250)">+250 ml (Glass)</button>
+      <button class="btn" onclick="addWater(500)">+500 ml (Bottle)</button>
+      <button class="btn" style="margin-left:auto; background:#450a0a; color:#fca5a5;" onclick="resetWater()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Warung Ordering Quick Reference -->
+  <div class="card">
+    <div style="font-weight:600; margin-bottom:10px;">Warung Ordering Cheat Sheet</div>
+    <div class="tab-bar">
+      <div class="tab active" onclick="showWarung('warteg', this)">Warteg</div>
+      <div class="tab" onclick="showWarung('padang', this)">Nasi Padang</div>
+      <div class="tab" onclick="showWarung('pecel', this)">Pecel / Salad</div>
+      <div class="tab" onclick="showWarung('soup', this)">Sop / Lempah</div>
+    </div>
+    <div class="warung-content" id="warungText"></div>
+  </div>
+
+  <script>
+    let currentMode = 'normal';
+    let waterMl = parseInt(localStorage.getItem('sh_water') || '0', 10);
+
+    const normalSchedule = [
+      { time: "04:30", desc: "Subuh + 400ml water + 10 min micro-workout (push-ups/squats)." },
+      { time: "09:30", desc: "Breakfast: Eggs/tofu + veggies + light rice. Shift main coffee here." },
+      { time: "12:30", desc: "Lunch: Nasi setengah + high protein. 10-minute post-meal walk." },
+      { time: "14:30", desc: "Green tea transition for smooth afternoon focus (no coffee)." },
+      { time: "18:30-20:00", desc: "Clean Dinner: Clear soup (sop bening/lempah) or ikan bakar. Skip deep-frying." }
+    ];
+
+    const maintSchedule = [
+      { time: "20:30", desc: "Light clean meal + 20-30 min tactical power nap before shift." },
+      { time: "00:00", desc: "Window starts. Shift primary coffee/tea here for night alertness." },
+      { time: "03:30", desc: "STRICT Caffeine Cutoff. Drink cold water & eat hard-boiled eggs/nuts only." },
+      { time: "07:00", desc: "Shift handoff. Sleep in cool room with blackout curtains." }
+    ];
+
+    const warungTips = {
+      warteg: "• Order: 'Nasi setengah, telur balado/rebus, ayam ungkep, capcay/kangkung.'<br>• Tip: Ask them to drain excess oil using the slotted spoon.",
+      padang: "• Order: 'Ayam pop / ikan bakar, daun singkong rebus, sambal ijo.'<br>• Rule: Ask explicitly 'Tanpa kuah gulai/santan' to avoid stealth oil.",
+      pecel: "• Order: 'Pecel sayur bumbu dipisah' (sauce on side).<br>• Add steamed tofu or boiled egg for clean protein. Skip rempeyek/kerupuk.",
+      soup: "• Best evening option: Sop ayam kampung, soto ayam kuah bening (no koya), or lempah kuning.<br>• Rehydrates and digests cleanly before sleep."
+    };
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnNormal').classList.toggle('active', mode === 'normal');
+      document.getElementById('btnMaint').classList.toggle('active', mode === 'maint');
+      renderTimeline();
+      updateCaffeine();
+    }
+
+    function renderTimeline() {
+      const container = document.getElementById('timelineContainer');
+      const list = currentMode === 'normal' ? normalSchedule : maintSchedule;
+      container.innerHTML = list.map(item => `
+        <div class="timeline-item">
+          <div class="timeline-time">${item.time}</div>
+          <div class="timeline-desc">${item.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    function updateCaffeine() {
+      const now = new Date();
+      const hour = now.getHours();
+      const badge = document.getElementById('caffeineBadge');
+      const note = document.getElementById('caffeineNote');
+
+      if (currentMode === 'normal') {
+        if (hour >= 9 && hour < 14) {
+          badge.className = "status-badge badge-ok";
+          badge.innerText = "Coffee Window Open";
+          note.innerText = "Safe window for your primary 1-2 cups of black coffee.";
+        } else if (hour >= 14 && hour < 16) {
+          badge.className = "status-badge badge-warn";
+          badge.innerText = "Tea Only";
+          note.innerText = "Switch to green tea with L-theanine to protect deep sleep tonight.";
+        } else {
+          badge.className = "status-badge badge-danger";
+          badge.innerText = "Caffeine Lockout";
+          note.innerText = "Stick to water or decaf. Caffeine now will fragment your sleep architecture.";
+        }
+      } else {
+        if (hour >= 23 || hour < 4) {
+          badge.className = "status-badge badge-ok";
+          badge.innerText = "Active Window Caffeine";
+          note.innerText = "Caffeine permitted until 03:30 AM to stay sharp during cutover.";
+        } else {
+          badge.className = "status-badge badge-danger";
+          badge.innerText = "Curfew Active";
+          note.innerText = "Stop caffeine to allow your nervous system to sleep when morning comes.";
+        }
+      }
+    }
+
+    function addWater(amount) {
+      waterMl = Math.min(waterMl + amount, 4000);
+      localStorage.setItem('sh_water', waterMl);
+      renderWater();
+    }
+
+    function resetWater() {
+      waterMl = 0;
+      localStorage.setItem('sh_water', 0);
+      renderWater();
+    }
+
+    function renderWater() {
+      document.getElementById('waterText').innerText = `${waterMl} / 2500 ml`;
+      const pct = Math.min((waterMl / 2500) * 100, 100);
+      document.getElementById('waterProgress').style.width = pct + '%';
+    }
+
+    function showWarung(type, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('warungText').innerHTML = warungTips[type];
+    }
+
+    // Init
+    renderTimeline();
+    renderWater();
+    updateCaffeine();
+    showWarung('warteg', document.querySelector('.tab'));
+    setInterval(updateCaffeine, 60000);
+  </script>
+</body>
+</html>
